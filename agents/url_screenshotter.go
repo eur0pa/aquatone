@@ -84,13 +84,10 @@ func (a *URLScreenshotter) screenshotURL(s string) {
 		"--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio", "--disable-notifications",
 		"--disable-crash-reporter",
 		"--ignore-certificate-errors",
+		"--no-sandbox",
 		"--user-agent=" + RandomUserAgent(),
 		"--window-size=" + *a.session.Options.Resolution,
 		"--screenshot=" + filePath,
-	}
-
-	if os.Geteuid() == 0 {
-		chromeArguments = append(chromeArguments, "--no-sandbox")
 	}
 
 	if *a.session.Options.Proxy != "" {
