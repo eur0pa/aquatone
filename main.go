@@ -60,13 +60,13 @@ func main() {
 
 	sess.Out.Important("%s v%s started at %s\n\n", core.Name, core.Version, sess.Stats.StartedAt.Format(time.RFC3339))
 
-	agents.NewTCPPortScanner().Register(sess)
+	//agents.NewTCPPortScanner().Register(sess)
 	agents.NewURLPublisher().Register(sess)
 	agents.NewURLRequester().Register(sess)
 	agents.NewURLLogger().Register(sess)
 	agents.NewURLScreenshotter().Register(sess)
-	agents.NewURLTechnologyFingerprinter().Register(sess)
-	agents.NewURLTakeoverDetector().Register(sess)
+	//agents.NewURLTechnologyFingerprinter().Register(sess)
+	//agents.NewURLTakeoverDetector().Register(sess)
 
 	reader := bufio.NewReader(os.Stdin)
 	var targets []string

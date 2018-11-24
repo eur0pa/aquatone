@@ -3,8 +3,7 @@ package parsers
 import (
 	"bufio"
 	"io"
-
-	"github.com/mvdan/xurls"
+	//	"github.com/mvdan/xurls"
 )
 
 type RegexParser struct{}
@@ -19,13 +18,14 @@ func (p *RegexParser) Parse(r io.Reader) ([]string, error) {
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		for _, target := range xurls.Relaxed().FindAllString(scanner.Text(), -1) {
-			if _, found := targetsFilter[target]; found {
-				continue
-			}
-			targets = append(targets, target)
-			targetsFilter[target] = struct{}{}
+		//for _, target := range xurls.Relaxed().FindAllString(scanner.Text(), -1) {
+		target := scanner.Text()
+		if _, found := targetsFilter[target]; found {
+			continue
 		}
+		targets = append(targets, target)
+		targetsFilter[target] = struct{}{}
+		//}
 	}
 	return targets, nil
 }
