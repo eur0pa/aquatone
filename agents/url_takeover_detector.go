@@ -53,12 +53,12 @@ func (a *URLTakeoverDetector) runDetectorFunctions(u *url.URL) {
 	hostname := u.Hostname()
 	addrs, err := net.LookupHost(fmt.Sprintf("%s.", hostname))
 	if err != nil {
-		a.session.Out.Error("Unable to resolve %s to IP addresses: %s\n", hostname, err)
+		//a.session.Out.Error("Unable to resolve %s to IP addresses: %s\n", hostname, err)
 		return
 	}
 	cname, err := net.LookupCNAME(fmt.Sprintf("%s.", hostname))
 	if err != nil {
-		a.session.Out.Error("Unable to resolve %s to CNAME: %s\n", hostname, err)
+		//a.session.Out.Error("Unable to resolve %s to CNAME: %s\n", hostname, err)
 		return
 	}
 

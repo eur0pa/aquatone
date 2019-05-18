@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/michenriksen/aquatone/agents"
@@ -58,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	sess.Out.Important("%s v%s started at %s\n\n", core.Name, core.Version, sess.Stats.StartedAt.Format(time.RFC3339))
+	//sess.Out.Important("%s v%s started at %s\n\n", core.Name, core.Version, sess.Stats.StartedAt.Format(time.RFC3339))
 
 	//agents.NewTCPPortScanner().Register(sess)
 	agents.NewURLPublisher().Register(sess)
@@ -66,7 +65,7 @@ func main() {
 	agents.NewURLLogger().Register(sess)
 	agents.NewURLScreenshotter().Register(sess)
 	//agents.NewURLTechnologyFingerprinter().Register(sess)
-	//agents.NewURLTakeoverDetector().Register(sess)
+	agents.NewURLTakeoverDetector().Register(sess)
 
 	reader := bufio.NewReader(os.Stdin)
 	var targets []string
@@ -92,10 +91,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	sess.Out.Important("Targets    : %d\n", len(targets))
-	sess.Out.Important("Threads    : %d\n", *sess.Options.Threads)
-	sess.Out.Important("Ports      : %s\n", strings.Trim(strings.Replace(fmt.Sprint(sess.Ports), " ", ", ", -1), "[]"))
-	sess.Out.Important("Output dir : %s\n\n", *sess.Options.OutDir)
+	//sess.Out.Important("Targets    : %d\n", len(targets))
+	//sess.Out.Important("Threads    : %d\n", *sess.Options.Threads)
+	//sess.Out.Important("Ports      : %s\n", strings.Trim(strings.Replace(fmt.Sprint(sess.Ports), " ", ", ", -1), "[]"))
+	//sess.Out.Important("Output dir : %s\n\n", *sess.Options.OutDir)
 
 	for _, target := range targets {
 		if isURL(target) {
@@ -112,7 +111,7 @@ func main() {
 	sess.WaitGroup2.Wait()
 	sess.WaitGroup.Wait()
 
-	sess.Out.Important("\nClustering similar sites...")
+	//sess.Out.Important("\nClustering similar sites...")
 	pageStructures := make(map[string][]string)
 	var pageClusters [][]*core.ResponsiveURL
 
@@ -155,8 +154,8 @@ func main() {
 		}
 	}
 
-	sess.Out.Important(" done\n")
-	sess.Out.Important("Generating HTML report...")
+	//sess.Out.Important(" done\n")
+	//sess.Out.Important("Generating HTML report...")
 
 	reportData := core.ReportData{
 		Session: sess,
@@ -183,27 +182,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	sess.Out.Important(" done\n\n")
+	//sess.Out.Important(" done\n\n")
 
 	sess.End()
 
-	sess.Out.Important("Time:\n")
-	sess.Out.Info(" - Started at  : %v\n", sess.Stats.StartedAt.Format(time.RFC3339))
-	sess.Out.Info(" - Finished at : %v\n", sess.Stats.FinishedAt.Format(time.RFC3339))
-	sess.Out.Info(" - Duration    : %v\n\n", sess.Stats.Duration().Round(time.Second))
+	//sess.Out.Important("Time:\n")
+	//sess.Out.Info(" - Started at  : %v\n", sess.Stats.StartedAt.Format(time.RFC3339))
+	//sess.Out.Info(" - Finished at : %v\n", sess.Stats.FinishedAt.Format(time.RFC3339))
+	//sess.Out.Info(" - Duration    : %v\n\n", sess.Stats.Duration().Round(time.Second))
 
-	sess.Out.Important("Requests:\n")
-	sess.Out.Info(" - Successful : %v\n", sess.Stats.RequestSuccessful)
-	sess.Out.Info(" - Failed     : %v\n\n", sess.Stats.RequestFailed)
+	//sess.Out.Important("Requests:\n")
+	//sess.Out.Info(" - Successful : %v\n", sess.Stats.RequestSuccessful)
+	//sess.Out.Info(" - Failed     : %v\n\n", sess.Stats.RequestFailed)
 
-	sess.Out.Info(" - 2xx : %v\n", sess.Stats.ResponseCode2xx)
-	sess.Out.Info(" - 3xx : %v\n", sess.Stats.ResponseCode3xx)
-	sess.Out.Info(" - 4xx : %v\n", sess.Stats.ResponseCode4xx)
-	sess.Out.Info(" - 5xx : %v\n\n", sess.Stats.ResponseCode5xx)
+	//sess.Out.Info(" - 2xx : %v\n", sess.Stats.ResponseCode2xx)
+	//sess.Out.Info(" - 3xx : %v\n", sess.Stats.ResponseCode3xx)
+	//sess.Out.Info(" - 4xx : %v\n", sess.Stats.ResponseCode4xx)
+	//sess.Out.Info(" - 5xx : %v\n\n", sess.Stats.ResponseCode5xx)
 
-	sess.Out.Important("Screenshots:\n")
-	sess.Out.Info(" - Successful : %v\n", sess.Stats.ScreenshotSuccessful)
-	sess.Out.Info(" - Failed     : %v\n\n", sess.Stats.ScreenshotFailed)
+	//sess.Out.Important("Screenshots:\n")
+	//sess.Out.Info(" - Successful : %v\n", sess.Stats.ScreenshotSuccessful)
+	//sess.Out.Info(" - Failed     : %v\n\n", sess.Stats.ScreenshotFailed)
 
-	sess.Out.Important("Wrote HTML report to: %s\n\n", sess.GetFilePath("aquatone_report.html"))
+	//sess.Out.Important("Wrote HTML report to: %s\n\n", sess.GetFilePath("aquatone_report.html"))
 }

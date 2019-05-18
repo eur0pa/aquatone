@@ -40,11 +40,16 @@ func (a *URLRequester) OnURL(url string) {
 		}
 		resp, _, errs := http.Get(url).
 			Set("User-Agent", RandomUserAgent()).
+			Set("Source-IP", ip).
+			Set("True-Client-IP", ip).
 			Set("X-Client-IP", ip).
-			Set("X-Remote-IP", ip).
-			Set("X-Remote-Addr", ip).
 			Set("X-Forwarded-For", ip).
-			Set("X-OriginatingIP", ip).
+			Set("X-Originating-IP", ip).
+			Set("X-Real-IP", ip).
+			Set("X-Remote-Addr", ip).
+			Set("X-Remote-IP", ip).
+			Set("XL-Proxy-Client-IP", ip).
+			Set("Z-Forwarded-For", ip).
 			Set("Via", "1.1 "+ip).
 			Set("Forwarded", "for="+ip+";proto=http;by="+ip).
 			End()
@@ -54,7 +59,7 @@ func (a *URLRequester) OnURL(url string) {
 			for _, err := range errs {
 				a.session.Out.Debug("[%s] Error: %v\n", a.ID(), err)
 				if os.IsTimeout(err) {
-					a.session.Out.Error("%s: request timeout\n", url)
+					//a.session.Out.Error("%s: request timeout\n", url)
 					return
 				}
 			}
@@ -76,7 +81,8 @@ func (a *URLRequester) OnURL(url string) {
 			a.session.Stats.IncrementResponseCode2xx()
 			status = Green(resp.Status)
 		}
-		a.session.Out.Info("%s: %s\n", url, status)
+		//a.session.Out.Info("%s: %s\n", url, status)
+		_ = status
 
 		a.writeHeaders(url, resp)
 		if *a.session.Options.SaveBody {

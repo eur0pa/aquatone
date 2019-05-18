@@ -122,7 +122,7 @@ func (a *URLScreenshotter) screenshotURL(s string) {
 	if err := cmd.Start(); err != nil {
 		a.session.Out.Debug("[%s] Error: %v\n", a.ID(), err)
 		a.session.Stats.IncrementScreenshotFailed()
-		a.session.Out.Error("%s: screenshot failed: %s\n", s, err)
+		//a.session.Out.Error("%s: screenshot failed: %s\n", s, err)
 		return
 	}
 
@@ -130,14 +130,14 @@ func (a *URLScreenshotter) screenshotURL(s string) {
 		a.session.Stats.IncrementScreenshotFailed()
 		a.session.Out.Debug("[%s] Error: %v\n", a.ID(), err)
 		if ctx.Err() == context.DeadlineExceeded {
-			a.session.Out.Error("%s: screenshot timed out\n", s)
+			//a.session.Out.Error("%s: screenshot timed out\n", s)
 			return
 		}
 
-		a.session.Out.Error("%s: screenshot failed: %s\n", s, err)
+		//a.session.Out.Error("%s: screenshot failed: %s\n", s, err)
 		return
 	}
 
 	a.session.Stats.IncrementScreenshotSuccessful()
-	a.session.Out.Info("%s: %s\n", s, Green("screenshot successful"))
+	//a.session.Out.Info("%s: %s\n", s, Green("screenshot successful"))
 }
