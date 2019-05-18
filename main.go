@@ -163,6 +163,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 	sess.EventBus.WaitAsync()
 	sess.WaitGroup.Wait()
+	sess.WaitGroup2.Wait()
 
 	sess.Out.Important("Calculating page structures...")
 	f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

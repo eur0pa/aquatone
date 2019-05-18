@@ -34,11 +34,22 @@ func (a *URLRequester) OnURL(url string) {
 	go func(url string) {
 		defer a.session.WaitGroup.Done()
 		http := Gorequest(a.session.Options)
+		ip := "127.0.0.1"
 		resp, _, errs := http.Get(url).
 			Set("User-Agent", RandomUserAgent()).
-			Set("X-Forwarded-For", RandomIPv4Address()).
-			Set("Via", fmt.Sprintf("1.1 %s", RandomIPv4Address())).
-			Set("Forwarded", fmt.Sprintf("for=%s;proto=http;by=%s", RandomIPv4Address(), RandomIPv4Address())).End()
+			Set("Source-IP", ip).
+			Set("True-Client-IP", ip).
+			Set("X-Client-IP", ip).
+			Set("X-Forwarded-For", ip).
+			Set("X-Originating-IP", ip).
+			Set("X-Real-IP", ip).
+			Set("X-Remote-Addr", ip).
+			Set("X-Remote-IP", ip).
+			Set("XL-Proxy-Client-IP", ip).
+			Set("Z-Forwarded-For", ip).
+			Set("Via", "1.1 "+ip).
+			Set("Forwarded", "for="+ip+";proto=http;by="+ip).
+			End()
 		var status string
 		if errs != nil {
 			a.session.Stats.IncrementRequestFailed()

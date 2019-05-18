@@ -42,9 +42,9 @@ func (a *URLScreenshotter) OnURLResponsive(url string) {
 		return
 	}
 
-	a.session.WaitGroup.Add()
+	a.session.WaitGroup2.Add()
 	go func(page *core.Page) {
-		defer a.session.WaitGroup.Done()
+		defer a.session.WaitGroup2.Done()
 		a.screenshotPage(page)
 	}(page)
 }
@@ -109,13 +109,10 @@ func (a *URLScreenshotter) screenshotPage(page *core.Page) {
 		"--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio", "--disable-notifications",
 		"--disable-crash-reporter",
 		"--ignore-certificate-errors",
+		"--no-sandbox",
 		"--user-agent=" + RandomUserAgent(),
 		"--window-size=" + *a.session.Options.Resolution,
 		"--screenshot=" + a.session.GetFilePath(filePath),
-	}
-
-	if os.Geteuid() == 0 {
-		chromeArguments = append(chromeArguments, "--no-sandbox")
 	}
 
 	if *a.session.Options.Proxy != "" {
