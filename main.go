@@ -150,6 +150,8 @@ func main() {
 	sess.Out.Important("Ports      : %s\n", strings.Trim(strings.Replace(fmt.Sprint(sess.Ports), " ", ", ", -1), "[]"))
 	sess.Out.Important("Output dir : %s\n\n", *sess.Options.OutDir)
 
+	sess.EventBus.Publish(core.SessionStart)
+
 	for _, target := range targets {
 		if isURL(target) {
 			if hasSupportedScheme(target) {
@@ -164,6 +166,11 @@ func main() {
 	sess.EventBus.WaitAsync()
 	sess.WaitGroup.Wait()
 	sess.WaitGroup2.Wait()
+
+	sess.EventBus.Publish(core.SessionEnd)
+	time.Sleep(1 * time.Second)
+	sess.EventBus.WaitAsync()
+	sess.WaitGroup.Wait()
 
 	sess.Out.Important("Calculating page structures...")
 	f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
