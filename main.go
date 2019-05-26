@@ -112,7 +112,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	agents.NewTCPPortScanner().Register(sess)
+	//agents.NewTCPPortScanner().Register(sess)
 	agents.NewURLPublisher().Register(sess)
 	agents.NewURLRequester().Register(sess)
 	agents.NewURLHostnameResolver().Register(sess)
