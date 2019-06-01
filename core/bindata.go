@@ -4,7 +4,7 @@
 // static/wappalyzer_fingerprints.json
 // DO NOT EDIT!
 
-package main
+package core
 
 import (
 	"bytes"
@@ -161,7 +161,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"static/report_template.html": staticReport_templateHtml,
+	"static/report_template.html":         staticReport_templateHtml,
 	"static/wappalyzer_fingerprints.json": staticWappalyzer_fingerprintsJson,
 }
 
@@ -204,9 +204,10 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
+
 var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
-		"report_template.html": &bintree{staticReport_templateHtml, map[string]*bintree{}},
+		"report_template.html":         &bintree{staticReport_templateHtml, map[string]*bintree{}},
 		"wappalyzer_fingerprints.json": &bintree{staticWappalyzer_fingerprintsJson, map[string]*bintree{}},
 	}},
 }}
@@ -257,4 +258,3 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
-
