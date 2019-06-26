@@ -3,7 +3,9 @@ package agents
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/michenriksen/aquatone/core"
@@ -83,15 +85,25 @@ func (a *URLRequester) OnURL(url string) {
 	}(url)
 }
 
-func (a *URLRequester) createPageFromResponse(url string, resp gorequest.Response) (*core.Page, error) {
-	page, err := a.session.AddPage(url)
+func (a *URLRequester) createPageFromResponse(url2 string, resp gorequest.Response) (*core.Page, error) {
+	page, err := a.session.AddPage(url2)
 	if err != nil {
 		return nil, err
 	}
 
+	u, err := url.Parse(url2)
+
 	page.Status = resp.Status
+	page.Protocol = u.Scheme
+	page.Port = u.Port()
+	page.Code = strconv.Itoa(resp.StatusCode)
+	page.Length = strconv.FormatInt(resp.ContentLength, 10)
+
 	for name, value := range resp.Header {
 		page.AddHeader(name, strings.Join(value, " "))
+		if name == "Server" || name == "server" || name == "SERVER" {
+			page.Server = strings.Join(value, " ")
+		}
 	}
 
 	return page, nil

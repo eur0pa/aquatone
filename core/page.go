@@ -99,9 +99,14 @@ type Page struct {
 	sync.Mutex
 	UUID           string   `json:"uuid"`
 	URL            string   `json:"url"`
+	Protocol       string   `json:"protocol"`
 	Hostname       string   `json:"hostname"`
+	Port           string   `json:"port"`
 	Addrs          []string `json:"addrs"`
 	Status         string   `json:"status"`
+	Code           string   `json:"code"`
+	Server         string   `json:"server"`
+	Length         string   `json:"len"`
 	PageTitle      string   `json:"pageTitle"`
 	PageStructure  []string `json:"-"`
 	HeadersPath    string   `json:"headersPath"`
