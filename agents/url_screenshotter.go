@@ -126,10 +126,11 @@ func (a *URLScreenshotter) locateChrome() {
 func (a *URLScreenshotter) screenshotPage(page *core.Page) {
 	filePath := fmt.Sprintf("screenshots/%s.png", page.BaseFilename())
 	var chromeArguments = []string{
-		"--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio", "--disable-notifications",
-		"--no-first-run", "--disable-crash-reporter", "--ignore-certificate-errors", "--incognito",
-		"--disable-infobars", "--disable-sync", "--no-default-browser-check",
-		"--no-sandbox",
+		"--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio",
+		"--disable-notifications", "--no-first-run", "--disable-crash-reporter",
+		"--ignore-certificate-errors", "--incognito", "--disable-infobars",
+		"--disable-sync", "--no-default-browser-check", "--high-dpi-support=1",
+		"--force-device-scale-factor=1", "--no-sandbox",
 		"--user-data-dir=" + a.tempUserDirPath,
 		"--user-agent=" + RandomUserAgent(),
 		"--window-size=" + *a.session.Options.Resolution,

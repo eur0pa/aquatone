@@ -101,12 +101,19 @@ func (a *URLRequester) createPageFromResponse(url2 string, resp gorequest.Respon
 	page.Status = resp.Status
 	page.Protocol = u.Scheme
 	page.Port = u.Port()
+	if page.Port == "" {
+		if page.Protocol == "https" {
+			page.Port = "443"
+		} else {
+			page.Port = "80"
+		}
+	}
 	page.Code = strconv.Itoa(resp.StatusCode)
 	page.Length = strconv.FormatInt(resp.ContentLength, 10)
 
 	for name, value := range resp.Header {
 		page.AddHeader(name, strings.Join(value, " "))
-		if name == "Server" || name == "server" || name == "SERVER" {
+		if strings.EqualFold("server", name) {
 			page.Server = strings.Join(value, " ")
 		}
 	}
