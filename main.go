@@ -117,8 +117,10 @@ func main() {
 	agents.NewURLRequester().Register(sess)
 	agents.NewURLHostnameResolver().Register(sess)
 	agents.NewURLPageTitleExtractor().Register(sess)
-	agents.NewURLScreenshotter().Register(sess)
-	agents.NewURLTechnologyFingerprinter().Register(sess)
+	if *sess.Options.OutDir != "none" {
+		agents.NewURLScreenshotter().Register(sess)
+		agents.NewURLTechnologyFingerprinter().Register(sess)
+	}
 	agents.NewURLTakeoverDetector().Register(sess)
 
 	reader := bufio.NewReader(os.Stdin)
