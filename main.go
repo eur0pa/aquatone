@@ -174,73 +174,74 @@ func main() {
 	sess.EventBus.WaitAsync()
 	sess.WaitGroup.Wait()
 
-	sess.Out.Important("Calculating page structures...")
-	f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	for _, page := range sess.Pages {
-		filename := sess.GetFilePath(fmt.Sprintf("html/%s.html", page.BaseFilename()))
-		body, err := os.Open(filename)
-		if err != nil {
-			continue
+	if *sess.Options.OutDir != "none" {
+		sess.Out.Important("Calculating page structures...")
+		f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		for _, page := range sess.Pages {
+			filename := sess.GetFilePath(fmt.Sprintf("html/%s.html", page.BaseFilename()))
+			body, err := os.Open(filename)
+			if err != nil {
+				continue
+			}
+			structure, _ := core.GetPageStructure(body)
+			page.PageStructure = structure
+			f.WriteString(page.URL + "\n")
 		}
-		structure, _ := core.GetPageStructure(body)
-		page.PageStructure = structure
-		f.WriteString(page.URL + "\n")
-	}
-	f.Close()
-	sess.Out.Important(" done\n")
+		f.Close()
+		sess.Out.Important(" done\n")
 
-	sess.Out.Important("Clustering similar pages...")
-	for _, page := range sess.Pages {
-		foundCluster := false
-		for clusterUUID, cluster := range sess.PageSimilarityClusters {
-			addToCluster := true
-			for _, pageURL := range cluster {
-				page2 := sess.GetPage(pageURL)
-				if page2 != nil && core.GetSimilarity(page.PageStructure, page2.PageStructure) < 0.80 {
-					addToCluster = false
+		sess.Out.Important("Clustering similar pages...")
+		for _, page := range sess.Pages {
+			foundCluster := false
+			for clusterUUID, cluster := range sess.PageSimilarityClusters {
+				addToCluster := true
+				for _, pageURL := range cluster {
+					page2 := sess.GetPage(pageURL)
+					if page2 != nil && core.GetSimilarity(page.PageStructure, page2.PageStructure) < 0.80 {
+						addToCluster = false
+						break
+					}
+				}
+
+				if addToCluster {
+					foundCluster = true
+					sess.PageSimilarityClusters[clusterUUID] = append(sess.PageSimilarityClusters[clusterUUID], page.URL)
 					break
 				}
 			}
 
-			if addToCluster {
-				foundCluster = true
-				sess.PageSimilarityClusters[clusterUUID] = append(sess.PageSimilarityClusters[clusterUUID], page.URL)
-				break
+			if !foundCluster {
+				newClusterUUID := uuid.New().String()
+				sess.PageSimilarityClusters[newClusterUUID] = []string{page.URL}
 			}
 		}
+		sess.Out.Important(" done\n")
 
-		if !foundCluster {
-			newClusterUUID := uuid.New().String()
-			sess.PageSimilarityClusters[newClusterUUID] = []string{page.URL}
+		sess.Out.Important("Generating HTML report...")
+		var template []byte
+		if *sess.Options.TemplatePath != "" {
+			template, err = ioutil.ReadFile(*sess.Options.TemplatePath)
+		} else {
+			template, err = sess.Asset("static/report_template.html")
 		}
-	}
-	sess.Out.Important(" done\n")
 
-	sess.Out.Important("Generating HTML report...")
-	var template []byte
-	if *sess.Options.TemplatePath != "" {
-		template, err = ioutil.ReadFile(*sess.Options.TemplatePath)
-	} else {
-		template, err = sess.Asset("static/report_template.html")
+		if err != nil {
+			sess.Out.Fatal("Can't read report template file\n")
+			os.Exit(1)
+		}
+		report := core.NewReport(sess, string(template))
+		f, err = os.OpenFile(sess.GetFilePath("aquatone_report.html"), os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			sess.Out.Fatal("Error during report generation: %s\n", err)
+			os.Exit(1)
+		}
+		err = report.Render(f)
+		if err != nil {
+			sess.Out.Fatal("Error during report generation: %s\n", err)
+			os.Exit(1)
+		}
+		sess.Out.Important(" done\n\n")
 	}
-
-	if err != nil {
-		sess.Out.Fatal("Can't read report template file\n")
-		os.Exit(1)
-	}
-	report := core.NewReport(sess, string(template))
-	f, err = os.OpenFile(sess.GetFilePath("aquatone_report.html"), os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		sess.Out.Fatal("Error during report generation: %s\n", err)
-		os.Exit(1)
-	}
-	err = report.Render(f)
-	if err != nil {
-		sess.Out.Fatal("Error during report generation: %s\n", err)
-		os.Exit(1)
-	}
-	sess.Out.Important(" done\n\n")
-
 	sess.End()
 
 	sess.Out.Important("Writing session file...")
