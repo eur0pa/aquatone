@@ -253,6 +253,12 @@ func main() {
 			os.Exit(1)
 		}
 		sess.Out.Important(" done\n\n")
+	} else {
+		f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		for _, page := range sess.Pages {
+			f.WriteString(page.URL + "\n")
+		}
+		f.Close()
 	}
 	sess.End()
 
