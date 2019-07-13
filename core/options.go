@@ -7,6 +7,7 @@ import (
 )
 
 type Options struct {
+	Input             *string
 	Threads           *int
 	OutDir            *string
 	SessionPath       *string
@@ -27,6 +28,7 @@ type Options struct {
 
 func ParseOptions() (Options, error) {
 	options := Options{
+		Input:             flag.String("input", "urls.txt", "Input file with URLs"),
 		Threads:           flag.Int("threads", 0, "Number of concurrent threads (default number of logical CPUs)"),
 		OutDir:            flag.String("out", ".", "Directory to write files to"),
 		SessionPath:       flag.String("session", "", "Load Aquatone session file and generate HTML report"),
