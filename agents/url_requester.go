@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/michenriksen/aquatone/core"
+	"github.com/eur0pa/aquatone/core"
 	"github.com/parnurzeal/gorequest"
 )
 
