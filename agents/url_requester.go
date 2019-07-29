@@ -142,6 +142,7 @@ func (a *URLRequester) writeBody(page *core.Page, resp gorequest.Response) {
 		a.session.Out.Error("Failed to read response body for %s\n", page.URL)
 		return
 	}
+	page.Length = strconv.Itoa(len(body))
 
 	if err := ioutil.WriteFile(a.session.GetFilePath(filepath), body, 0644); err != nil {
 		a.session.Out.Debug("[%s] Error: %v\n", a.ID(), err)

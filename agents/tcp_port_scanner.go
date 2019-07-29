@@ -3,6 +3,8 @@ package agents
 import (
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eur0pa/aquatone/core"
@@ -28,18 +30,14 @@ func (a *TCPPortScanner) Register(s *core.Session) error {
 
 func (a *TCPPortScanner) OnHost(host string) {
 	a.session.Out.Debug("[%s] Received new host: %s\n", a.ID(), host)
-	for _, port := range a.session.Ports {
+	if strings.Contains(host, ":") {
+		x := strings.Split(host, ":")
+		host = x[0]
+		port, _ := strconv.Atoi(x[1])
 		a.session.WaitGroup.Add()
 		go func(port int, host string) {
 			defer a.session.WaitGroup.Done()
-			if a.scanPort(port, host) {
-				a.session.Stats.IncrementPortOpen()
-				a.session.Out.Info("%s: port %s %s\n", host, Green(fmt.Sprintf("%d", port)), Green("open"))
-				a.session.EventBus.Publish(core.TCPPort, port, host)
-			} else {
-				a.session.Stats.IncrementPortClosed()
-				a.session.Out.Debug("[%s] Port %d is closed on %s\n", a.ID(), port, host)
-			}
+			a.session.EventBus.Publish(core.TCPPort, port, host)
 		}(port, host)
 	}
 }

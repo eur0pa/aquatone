@@ -140,8 +140,11 @@ func (a *URLScreenshotter) screenshotPage(page *core.Page) {
 	if *a.session.Options.Proxy != "" {
 		chromeArguments = append(chromeArguments, "--proxy-server="+*a.session.Options.Proxy)
 	}
-
-	chromeArguments = append(chromeArguments, page.URL)
+	if *a.session.Options.OutDir != "local" {
+		chromeArguments = append(chromeArguments, page.URL)
+	} else {
+		chromeArguments = append(chromeArguments, "html/"+page.BaseFilename())
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(*a.session.Options.ScreenshotTimeout)*time.Millisecond)
 	defer cancel()

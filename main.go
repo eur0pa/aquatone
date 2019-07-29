@@ -110,7 +110,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	//agents.NewTCPPortScanner().Register(sess)
+	agents.NewTCPPortScanner().Register(sess)
 	agents.NewURLPublisher().Register(sess)
 	agents.NewURLRequester().Register(sess)
 	agents.NewURLHostnameResolver().Register(sess)
@@ -120,37 +120,6 @@ func main() {
 		agents.NewURLTechnologyFingerprinter().Register(sess)
 	}
 	agents.NewURLTakeoverDetector().Register(sess)
-
-	/*
-		reader := bufio.NewReader(os.Stdin)
-		var targets []string
-
-		if *sess.Options.Nmap {
-			parser := parsers.NewNmapParser()
-			targets, err = parser.Parse(reader)
-			if err != nil {
-				sess.Out.Fatal("Unable to parse input as Nmap/Masscan XML: %s\n", err)
-				os.Exit(1)
-			}
-		} else {
-			parser := parsers.NewRegexParser()
-			targets, err = parser.Parse(reader)
-			if err != nil {
-				sess.Out.Fatal("Unable to parse input.\n")
-				os.Exit(1)
-			}
-		}
-
-		if len(targets) == 0 {
-			sess.Out.Fatal("No targets found in input.\n")
-			os.Exit(1)
-		}
-
-		sess.Out.Important("Targets    : %d\n", len(targets))
-		sess.Out.Important("Threads    : %d\n", *sess.Options.Threads)
-		sess.Out.Important("Ports      : %s\n", strings.Trim(strings.Replace(fmt.Sprint(sess.Ports), " ", ", ", -1), "[]"))
-		sess.Out.Important("Output dir : %s\n\n", *sess.Options.OutDir)
-	*/
 
 	sess.EventBus.Publish(core.SessionStart)
 
@@ -163,16 +132,9 @@ func main() {
 	defer fp.Close()
 
 	scanner := bufio.NewScanner(fp)
-	//for _, target := range targets {
 	for scanner.Scan() {
 		target := scanner.Text()
-		if isURL(target) {
-			if hasSupportedScheme(target) {
-				sess.EventBus.Publish(core.URL, target)
-			}
-		} else {
-			sess.EventBus.Publish(core.Host, target)
-		}
+		sess.EventBus.Publish(core.Host, target)
 	}
 
 	time.Sleep(1 * time.Second)
