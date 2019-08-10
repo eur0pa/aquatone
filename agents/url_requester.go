@@ -82,9 +82,9 @@ func (a *URLRequester) OnURL(url string) {
 		}
 
 		// skip the fucking redirects holy shit
-		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
-			return
-		}
+		//if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		//	return
+		//}
 
 		a.session.EventBus.Publish(core.URLResponsive, url)
 	}(url)
