@@ -35,7 +35,8 @@ func (a *URLPublisher) OnTCPPort(port int, host string) {
 	} else {
 		url = HostAndPortToURL(host, port, "http")
 	}
-	a.session.EventBus.Publish(core.URL, url)
+	a.session.EventBus.Publish(core.URL, url, false)
+	a.session.EventBus.Publish(core.URL, url, true)
 }
 
 func (a *URLPublisher) isTLS(port int, host string) bool {

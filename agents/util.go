@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -94,12 +95,23 @@ func URLEscape(s string) string {
 	return url.QueryEscape(s)
 }
 
-func Gorequest(o core.Options) *gorequest.SuperAgent {
+func GorequestRedir(o core.Options) *gorequest.SuperAgent {
 	return gorequest.New().
 		Proxy(*o.Proxy).
 		Timeout(time.Duration(*o.HTTPTimeout) * time.Millisecond).
 		SetDebug(*o.Debug).
 		TLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+}
+
+func Gorequest(o core.Options) *gorequest.SuperAgent {
+	return gorequest.New().
+		Proxy(*o.Proxy).
+		Timeout(time.Duration(*o.HTTPTimeout) * time.Millisecond).
+		SetDebug(*o.Debug).
+		TLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
+		RedirectPolicy(func(gorequest.Request, []gorequest.Request) error {
+			return http.ErrUseLastResponse
+		})
 }
 
 func BaseFilenameFromURL(s string) string {

@@ -152,6 +152,7 @@ func main() {
 		sess.Out.Important("Calculating page structures...")
 		f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		for _, page := range sess.Pages {
+			f.WriteString(page.URL + "\n")
 			filename := sess.GetFilePath(fmt.Sprintf("html/%s.html", page.BaseFilename()))
 			body, err := os.Open(filename)
 			if err != nil {
@@ -159,7 +160,6 @@ func main() {
 			}
 			structure, _ := core.GetPageStructure(body)
 			page.PageStructure = structure
-			f.WriteString(page.URL + "\n")
 		}
 		f.Close()
 		sess.Out.Important(" done\n")

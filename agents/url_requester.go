@@ -30,12 +30,15 @@ func (a *URLRequester) Register(s *core.Session) error {
 	return nil
 }
 
-func (a *URLRequester) OnURL(url string) {
-	a.session.Out.Debug("[%s] Received new URL %s\n", a.ID(), url)
+func (a *URLRequester) OnURL(url string, r bool) {
+	a.session.Out.Debug("[%s] Received new URL %s (follow: %v)\n", a.ID(), url, r)
 	a.session.WaitGroup.Add()
 	go func(url string) {
 		defer a.session.WaitGroup.Done()
 		http := Gorequest(a.session.Options)
+		if r {
+			http = GorequestRedir(a.session.Options)
+		}
 		resp, _, errs := http.Get(url).
 			Set("User-Agent", RandomUserAgent()).
 			End()
@@ -80,11 +83,6 @@ func (a *URLRequester) OnURL(url string) {
 		if *a.session.Options.SaveBody {
 			a.writeBody(page, resp)
 		}
-
-		// skip the fucking redirects holy shit
-		//if resp.StatusCode >= 300 && resp.StatusCode < 400 {
-		//	return
-		//}
 
 		a.session.EventBus.Publish(core.URLResponsive, url)
 	}(url)
