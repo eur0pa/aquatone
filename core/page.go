@@ -107,6 +107,7 @@ type Page struct {
 	Code           string   `json:"code"`
 	Server         string   `json:"server"`
 	Length         string   `json:"len"`
+	Location       string   `json:"location"`
 	PageTitle      string   `json:"pageTitle"`
 	PageStructure  []string `json:"-"`
 	HeadersPath    string   `json:"headersPath"`

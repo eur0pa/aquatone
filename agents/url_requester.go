@@ -84,7 +84,9 @@ func (a *URLRequester) OnURL(url string, r bool) {
 			a.writeBody(page, resp)
 		}
 
-		a.session.EventBus.Publish(core.URLResponsive, url)
+		if r {
+			a.session.EventBus.Publish(core.URLResponsive, url)
+		}
 	}(url)
 }
 
@@ -113,6 +115,8 @@ func (a *URLRequester) createPageFromResponse(url2 string, resp gorequest.Respon
 		page.AddHeader(name, strings.Join(value, " "))
 		if strings.EqualFold("server", name) {
 			page.Server = strings.Join(value, " ")
+		} else if strings.EqualFold("location", name) {
+			page.Location = strings.Join(value, " ")
 		}
 	}
 
