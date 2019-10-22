@@ -134,7 +134,14 @@ func main() {
 	scanner := bufio.NewScanner(fp)
 	for scanner.Scan() {
 		target := scanner.Text()
-		sess.EventBus.Publish(core.Host, target)
+		if isURL(target) {
+			if hasSupportedScheme(target) {
+				sess.EventBus.Publish(core.URL, target, false)
+				sess.EventBus.Publish(core.URL, target, true)
+			}
+		} else {
+			sess.EventBus.Publish(core.Host, target)
+		}
 	}
 
 	time.Sleep(1 * time.Second)
@@ -144,7 +151,9 @@ func main() {
 	sess.WaitGroup2.Wait()
 
 	sess.EventBus.Publish(core.SessionEnd)
+
 	time.Sleep(1 * time.Second)
+
 	sess.EventBus.WaitAsync()
 	sess.WaitGroup.Wait()
 
