@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/eur0pa/aquatone/agents"
@@ -21,9 +20,6 @@ var (
 )
 
 func isURL(s string) bool {
-	if !strings.Contains("://", s) {
-		return false
-	}
 	u, err := url.ParseRequestURI(s)
 	if err != nil {
 		return false
