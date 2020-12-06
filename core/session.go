@@ -91,6 +91,7 @@ type Session struct {
 	Ports                  []int                         `json:"-"`
 	EventBus               EventBus.Bus                  `json:"-"`
 	WaitGroup              sizedwaitgroup.SizedWaitGroup `json:"-"`
+	WaitGroup2             sizedwaitgroup.SizedWaitGroup `json:"-"`
 }
 
 func (s *Session) Start() {
@@ -197,6 +198,7 @@ func (s *Session) initEventBus() {
 
 func (s *Session) initWaitGroup() {
 	s.WaitGroup = sizedwaitgroup.New(*s.Options.Threads)
+	s.WaitGroup2 = sizedwaitgroup.New(*s.Options.Threads)
 }
 
 func (s *Session) initDirectories() {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/michenriksen/aquatone/core"
+	"github.com/eur0pa/aquatone/core"
 )
 
 type URLScreenshotter struct {
@@ -46,9 +46,9 @@ func (a *URLScreenshotter) OnURLResponsive(url string) {
 		return
 	}
 
-	a.session.WaitGroup.Add()
+	a.session.WaitGroup2.Add()
 	go func(page *core.Page) {
-		defer a.session.WaitGroup.Done()
+		defer a.session.WaitGroup2.Done()
 		a.screenshotPage(page)
 	}(page)
 }
@@ -126,24 +126,25 @@ func (a *URLScreenshotter) locateChrome() {
 func (a *URLScreenshotter) screenshotPage(page *core.Page) {
 	filePath := fmt.Sprintf("screenshots/%s.png", page.BaseFilename())
 	var chromeArguments = []string{
-		"--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio", "--disable-notifications",
-		"--no-first-run", "--disable-crash-reporter", "--ignore-certificate-errors", "--incognito",
-		"--disable-infobars", "--disable-sync", "--no-default-browser-check",
+		"--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio",
+		"--disable-notifications", "--no-first-run", "--disable-crash-reporter",
+		"--ignore-certificate-errors", "--incognito", "--disable-infobars",
+		"--disable-sync", "--no-default-browser-check", "--high-dpi-support=1",
+		"--force-device-scale-factor=1", "--no-sandbox",
 		"--user-data-dir=" + a.tempUserDirPath,
 		"--user-agent=" + RandomUserAgent(),
 		"--window-size=" + *a.session.Options.Resolution,
 		"--screenshot=" + a.session.GetFilePath(filePath),
 	}
 
-	if os.Geteuid() == 0 {
-		chromeArguments = append(chromeArguments, "--no-sandbox")
-	}
-
 	if *a.session.Options.Proxy != "" {
 		chromeArguments = append(chromeArguments, "--proxy-server="+*a.session.Options.Proxy)
 	}
-
-	chromeArguments = append(chromeArguments, page.URL)
+	if *a.session.Options.OutDir != "local" {
+		chromeArguments = append(chromeArguments, page.URL)
+	} else {
+		chromeArguments = append(chromeArguments, "html/"+page.BaseFilename())
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(*a.session.Options.ScreenshotTimeout)*time.Millisecond)
 	defer cancel()

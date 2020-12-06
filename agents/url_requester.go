@@ -3,10 +3,12 @@ package agents
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
-	"github.com/michenriksen/aquatone/core"
+	"github.com/eur0pa/aquatone/core"
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -28,17 +30,18 @@ func (a *URLRequester) Register(s *core.Session) error {
 	return nil
 }
 
-func (a *URLRequester) OnURL(url string) {
-	a.session.Out.Debug("[%s] Received new URL %s\n", a.ID(), url)
+func (a *URLRequester) OnURL(url string, r bool) {
+	a.session.Out.Debug("[%s] Received new URL %s (follow: %v)\n", a.ID(), url, r)
 	a.session.WaitGroup.Add()
 	go func(url string) {
 		defer a.session.WaitGroup.Done()
 		http := Gorequest(a.session.Options)
+		if r {
+			http = GorequestRedir(a.session.Options)
+		}
 		resp, _, errs := http.Get(url).
 			Set("User-Agent", RandomUserAgent()).
-			Set("X-Forwarded-For", RandomIPv4Address()).
-			Set("Via", fmt.Sprintf("1.1 %s", RandomIPv4Address())).
-			Set("Forwarded", fmt.Sprintf("for=%s;proto=http;by=%s", RandomIPv4Address(), RandomIPv4Address())).End()
+			End()
 		var status string
 		if errs != nil {
 			a.session.Stats.IncrementRequestFailed()
@@ -81,19 +84,40 @@ func (a *URLRequester) OnURL(url string) {
 			a.writeBody(page, resp)
 		}
 
-		a.session.EventBus.Publish(core.URLResponsive, url)
+		if r {
+			a.session.EventBus.Publish(core.URLResponsive, url)
+		}
 	}(url)
 }
 
-func (a *URLRequester) createPageFromResponse(url string, resp gorequest.Response) (*core.Page, error) {
-	page, err := a.session.AddPage(url)
+func (a *URLRequester) createPageFromResponse(url2 string, resp gorequest.Response) (*core.Page, error) {
+	page, err := a.session.AddPage(url2)
 	if err != nil {
 		return nil, err
 	}
 
+	u, err := url.Parse(url2)
+
 	page.Status = resp.Status
+	page.Protocol = u.Scheme
+	page.Port = u.Port()
+	if page.Port == "" {
+		if page.Protocol == "https" {
+			page.Port = "443"
+		} else {
+			page.Port = "80"
+		}
+	}
+	page.Code = strconv.Itoa(resp.StatusCode)
+	page.Length = strconv.FormatInt(resp.ContentLength, 10)
+
 	for name, value := range resp.Header {
 		page.AddHeader(name, strings.Join(value, " "))
+		if strings.EqualFold("server", name) {
+			page.Server = strings.Join(value, " ")
+		} else if strings.EqualFold("location", name) {
+			page.Location = strings.Join(value, " ")
+		}
 	}
 
 	return page, nil
@@ -120,6 +144,7 @@ func (a *URLRequester) writeBody(page *core.Page, resp gorequest.Response) {
 		a.session.Out.Error("Failed to read response body for %s\n", page.URL)
 		return
 	}
+	page.Length = strconv.Itoa(len(body))
 
 	if err := ioutil.WriteFile(a.session.GetFilePath(filepath), body, 0644); err != nil {
 		a.session.Out.Debug("[%s] Error: %v\n", a.ID(), err)

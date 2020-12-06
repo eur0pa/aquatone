@@ -25,13 +25,9 @@
 #   unused-packages = true
 
 
-[prune]
-  go-tests = true
-  unused-packages = true
-
 [[constraint]]
-  branch = "master"
-  name = "github.com/remeh/sizedwaitgroup"
+  name = "github.com/PuerkitoBio/goquery"
+  version = "1.5.0"
 
 [[constraint]]
   branch = "master"
@@ -42,16 +38,16 @@
   version = "1.7.0"
 
 [[constraint]]
-  name = "github.com/parnurzeal/gorequest"
-  version = "0.2.15"
-
-[[constraint]]
-  name = "github.com/mvdan/xurls"
-  version = "2.0.0"
+  name = "github.com/google/uuid"
+  version = "1.1.1"
 
 [[constraint]]
   branch = "master"
-  name = "golang.org/x/net"
+  name = "github.com/lair-framework/go-nmap"
+
+[[constraint]]
+  name = "github.com/parnurzeal/gorequest"
+  version = "0.2.15"
 
 [[constraint]]
   name = "github.com/pmezard/go-difflib"
@@ -59,8 +55,12 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/lair-framework/go-nmap"
+  name = "github.com/remeh/sizedwaitgroup"
 
 [[constraint]]
-  name = "github.com/PuerkitoBio/goquery"
-  version = "1.4.1"
+  branch = "master"
+  name = "golang.org/x/net"
+
+[prune]
+  go-tests = true
+  unused-packages = true

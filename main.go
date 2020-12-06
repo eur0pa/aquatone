@@ -7,13 +7,11 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/eur0pa/aquatone/agents"
+	"github.com/eur0pa/aquatone/core"
 	"github.com/google/uuid"
-	"github.com/michenriksen/aquatone/agents"
-	"github.com/michenriksen/aquatone/core"
-	"github.com/michenriksen/aquatone/parsers"
 )
 
 var (
@@ -117,45 +115,29 @@ func main() {
 	agents.NewURLRequester().Register(sess)
 	agents.NewURLHostnameResolver().Register(sess)
 	agents.NewURLPageTitleExtractor().Register(sess)
-	agents.NewURLScreenshotter().Register(sess)
-	agents.NewURLTechnologyFingerprinter().Register(sess)
+	if *sess.Options.OutDir != "none" {
+		agents.NewURLScreenshotter().Register(sess)
+		agents.NewURLTechnologyFingerprinter().Register(sess)
+	}
 	agents.NewURLTakeoverDetector().Register(sess)
-
-	reader := bufio.NewReader(os.Stdin)
-	var targets []string
-
-	if *sess.Options.Nmap {
-		parser := parsers.NewNmapParser()
-		targets, err = parser.Parse(reader)
-		if err != nil {
-			sess.Out.Fatal("Unable to parse input as Nmap/Masscan XML: %s\n", err)
-			os.Exit(1)
-		}
-	} else {
-		parser := parsers.NewRegexParser()
-		targets, err = parser.Parse(reader)
-		if err != nil {
-			sess.Out.Fatal("Unable to parse input.\n")
-			os.Exit(1)
-		}
-	}
-
-	if len(targets) == 0 {
-		sess.Out.Fatal("No targets found in input.\n")
-		os.Exit(1)
-	}
-
-	sess.Out.Important("Targets    : %d\n", len(targets))
-	sess.Out.Important("Threads    : %d\n", *sess.Options.Threads)
-	sess.Out.Important("Ports      : %s\n", strings.Trim(strings.Replace(fmt.Sprint(sess.Ports), " ", ", ", -1), "[]"))
-	sess.Out.Important("Output dir : %s\n\n", *sess.Options.OutDir)
 
 	sess.EventBus.Publish(core.SessionStart)
 
-	for _, target := range targets {
+	// my workflow, fuck the rest
+	fp, err := os.Open(*sess.Options.Input)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	defer fp.Close()
+
+	scanner := bufio.NewScanner(fp)
+	for scanner.Scan() {
+		target := scanner.Text()
 		if isURL(target) {
 			if hasSupportedScheme(target) {
-				sess.EventBus.Publish(core.URL, target)
+				sess.EventBus.Publish(core.URL, target, false)
+				sess.EventBus.Publish(core.URL, target, true)
 			}
 		} else {
 			sess.EventBus.Publish(core.Host, target)
@@ -163,81 +145,92 @@ func main() {
 	}
 
 	time.Sleep(1 * time.Second)
+
 	sess.EventBus.WaitAsync()
 	sess.WaitGroup.Wait()
+	sess.WaitGroup2.Wait()
 
 	sess.EventBus.Publish(core.SessionEnd)
+
 	time.Sleep(1 * time.Second)
+
 	sess.EventBus.WaitAsync()
 	sess.WaitGroup.Wait()
 
-	sess.Out.Important("Calculating page structures...")
-	f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	for _, page := range sess.Pages {
-		filename := sess.GetFilePath(fmt.Sprintf("html/%s.html", page.BaseFilename()))
-		body, err := os.Open(filename)
-		if err != nil {
-			continue
+	if *sess.Options.OutDir != "none" {
+		sess.Out.Important("Calculating page structures...")
+		f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		for _, page := range sess.Pages {
+			f.WriteString(page.URL + "\n")
+			filename := sess.GetFilePath(fmt.Sprintf("html/%s.html", page.BaseFilename()))
+			body, err := os.Open(filename)
+			if err != nil {
+				continue
+			}
+			structure, _ := core.GetPageStructure(body)
+			page.PageStructure = structure
 		}
-		structure, _ := core.GetPageStructure(body)
-		page.PageStructure = structure
-		f.WriteString(page.URL + "\n")
-	}
-	f.Close()
-	sess.Out.Important(" done\n")
+		f.Close()
+		sess.Out.Important(" done\n")
 
-	sess.Out.Important("Clustering similar pages...")
-	for _, page := range sess.Pages {
-		foundCluster := false
-		for clusterUUID, cluster := range sess.PageSimilarityClusters {
-			addToCluster := true
-			for _, pageURL := range cluster {
-				page2 := sess.GetPage(pageURL)
-				if page2 != nil && core.GetSimilarity(page.PageStructure, page2.PageStructure) < 0.80 {
-					addToCluster = false
+		sess.Out.Important("Clustering similar pages...")
+		for _, page := range sess.Pages {
+			foundCluster := false
+			for clusterUUID, cluster := range sess.PageSimilarityClusters {
+				addToCluster := true
+				for _, pageURL := range cluster {
+					page2 := sess.GetPage(pageURL)
+					if page2 != nil && core.GetSimilarity(page.PageStructure, page2.PageStructure) < 0.80 {
+						addToCluster = false
+						break
+					}
+				}
+
+				if addToCluster {
+					foundCluster = true
+					sess.PageSimilarityClusters[clusterUUID] = append(sess.PageSimilarityClusters[clusterUUID], page.URL)
 					break
 				}
 			}
 
-			if addToCluster {
-				foundCluster = true
-				sess.PageSimilarityClusters[clusterUUID] = append(sess.PageSimilarityClusters[clusterUUID], page.URL)
-				break
+			if !foundCluster {
+				newClusterUUID := uuid.New().String()
+				sess.PageSimilarityClusters[newClusterUUID] = []string{page.URL}
 			}
 		}
+		sess.Out.Important(" done\n")
 
-		if !foundCluster {
-			newClusterUUID := uuid.New().String()
-			sess.PageSimilarityClusters[newClusterUUID] = []string{page.URL}
+		sess.Out.Important("Generating HTML report...")
+		var template []byte
+		if *sess.Options.TemplatePath != "" {
+			template, err = ioutil.ReadFile(*sess.Options.TemplatePath)
+		} else {
+			template, err = sess.Asset("static/report_template.html")
 		}
-	}
-	sess.Out.Important(" done\n")
 
-	sess.Out.Important("Generating HTML report...")
-	var template []byte
-	if *sess.Options.TemplatePath != "" {
-		template, err = ioutil.ReadFile(*sess.Options.TemplatePath)
+		if err != nil {
+			sess.Out.Fatal("Can't read report template file\n")
+			os.Exit(1)
+		}
+		report := core.NewReport(sess, string(template))
+		f, err = os.OpenFile(sess.GetFilePath("aquatone_report.html"), os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			sess.Out.Fatal("Error during report generation: %s\n", err)
+			os.Exit(1)
+		}
+		err = report.Render(f)
+		if err != nil {
+			sess.Out.Fatal("Error during report generation: %s\n", err)
+			os.Exit(1)
+		}
+		sess.Out.Important(" done\n\n")
 	} else {
-		template, err = sess.Asset("static/report_template.html")
+		f, _ := os.OpenFile(sess.GetFilePath("aquatone_urls.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		for _, page := range sess.Pages {
+			f.WriteString(page.URL + "\n")
+		}
+		f.Close()
 	}
-
-	if err != nil {
-		sess.Out.Fatal("Can't read report template file\n")
-		os.Exit(1)
-	}
-	report := core.NewReport(sess, string(template))
-	f, err = os.OpenFile(sess.GetFilePath("aquatone_report.html"), os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		sess.Out.Fatal("Error during report generation: %s\n", err)
-		os.Exit(1)
-	}
-	err = report.Render(f)
-	if err != nil {
-		sess.Out.Fatal("Error during report generation: %s\n", err)
-		os.Exit(1)
-	}
-	sess.Out.Important(" done\n\n")
-
 	sess.End()
 
 	sess.Out.Important("Writing session file...")
